@@ -5,10 +5,16 @@ edition = "2024"
 publish = false
 license = "Apache-2.0"
 
+[[bin]]
+name = "mock"
+path = "src/bin/mock.rs"
+required-features = ["auto-learn"]
+
 [features]
 auto-learn = []
 
 [dependencies]
+afpacket = { workspace = true }
 ahash = { workspace = true }
 ipnet = { workspace = true }
 iptrie = { workspace = true }
@@ -16,6 +22,7 @@ left-right = { workspace = true }
 mio = { workspace = true, features = ["os-ext", "net"] }
 mac_address= {version = "1.1.7"}
 net = { workspace = true }
+nom = { workspace = true, features = ["std"] }
 serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 tracing = { workspace = true }
