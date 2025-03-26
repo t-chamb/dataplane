@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Open Network Fabric Authors
 
-use crate::sample_nfs::{BroadcastMacs, DecrementTtl, InspectHeaders, Passthrough};
-use crate::{DynNetworkFunction, nf_dyn};
-use net::buffer::TestBuffer;
+use crate::buffer::TestBuffer;
+use crate::pipeline::dyn_nf::{DynNetworkFunction, nf_dyn};
+use crate::pipeline::sample_nfs::{BroadcastMacs, DecrementTtl, InspectHeaders, Passthrough};
 
 /// Generates an infinite sequence of network functions.
 ///

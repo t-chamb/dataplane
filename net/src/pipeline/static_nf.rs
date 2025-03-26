@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Open Network Fabric Authors
 
-use net::buffer::PacketBufferMut;
-use net::packet::Packet;
+use crate::buffer::PacketBufferMut;
+use crate::packet::Packet;
 use std::marker::PhantomData;
 
 /// Trait for an object that processes a stream of packets.
@@ -77,12 +77,12 @@ impl<Buf: PacketBufferMut, Nf: NetworkFunction<Buf>> StaticChain<Buf> for Nf {
 
 #[cfg(test)]
 mod test {
-    use net::eth::mac::{DestinationMac, Mac};
-    use net::headers::{TryEth, TryIpv4};
+    use crate::eth::mac::{DestinationMac, Mac};
+    use crate::headers::{TryEth, TryIpv4};
 
-    use crate::sample_nfs::{BroadcastMacs, DecrementTtl, InspectHeaders, Passthrough};
-    use crate::{NetworkFunction, StaticChain};
-    use net::packet::test_utils::build_test_ipv4_packet;
+    use crate::packet::test_utils::build_test_ipv4_packet;
+    use crate::pipeline::sample_nfs::{BroadcastMacs, DecrementTtl, InspectHeaders, Passthrough};
+    use crate::pipeline::{NetworkFunction, StaticChain};
 
     #[test]
     fn static_chain() {

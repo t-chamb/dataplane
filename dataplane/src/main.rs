@@ -19,8 +19,8 @@ use tracing::{info, trace, warn};
 
 use crate::args::{CmdArgs, Parser};
 use net::packet::Packet;
-use pipeline::sample_nfs::Passthrough;
-use pipeline::{DynPipeline, NetworkFunction};
+use net::pipeline::sample_nfs::Passthrough;
+use net::pipeline::{DynPipeline, NetworkFunction};
 
 #[global_allocator]
 static GLOBAL_ALLOCATOR: RteAllocator = RteAllocator::new_uninitialized();

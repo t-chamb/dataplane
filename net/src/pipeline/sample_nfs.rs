@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Open Network Fabric Authors
 
-use crate::NetworkFunction;
+use crate::buffer::PacketBufferMut;
+use crate::eth::mac::{DestinationMac, Mac};
+use crate::headers::{TryEthMut, TryHeaders, TryIpv4Mut, TryIpv6Mut, TryUdp};
+use crate::packet::Packet;
+use crate::pipeline::NetworkFunction;
 use arc_swap::ArcSwapOption;
-use net::buffer::PacketBufferMut;
-use net::eth::mac::{DestinationMac, Mac};
-use net::headers::TryUdp;
-use net::headers::{TryEthMut, TryHeaders, TryIpv4Mut, TryIpv6Mut};
-use net::packet::Packet;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;

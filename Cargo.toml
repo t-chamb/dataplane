@@ -8,7 +8,6 @@ members = [
 	"errno",
 	"id",
 	"net",
-	"pipeline",
 	"routing",
 ]
 
@@ -18,7 +17,6 @@ default-members = [
 	"errno",
 	"id",
 	"net",
-	"pipeline",
 	"routing",
 ]
 

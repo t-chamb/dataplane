@@ -15,7 +15,6 @@ dyn-iter = { workspace = true }
 mio = { workspace = true, features = ["os-ext", "net"] }
 net = { workspace = true, features = ["serde"] }
 ordermap = { workspace = true, features = ["std"] }
-pipeline = { workspace = true }
 routing = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_yml = { workspace = true }

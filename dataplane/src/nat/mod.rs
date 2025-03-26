@@ -43,7 +43,6 @@ mod prefixtrie;
 use crate::nat::fabric::{PeeringPolicy, Pif, Vpc};
 use crate::nat::iplist::IpList;
 use crate::nat::prefixtrie::PrefixTrie;
-use pipeline::NetworkFunction;
 
 use net::buffer::PacketBufferMut;
 use net::headers::Net;
@@ -51,6 +50,7 @@ use net::headers::{TryHeadersMut, TryIpMut};
 use net::ipv4::UnicastIpv4Addr;
 use net::ipv6::UnicastIpv6Addr;
 use net::packet::Packet;
+use net::pipeline::NetworkFunction;
 use net::vxlan::Vni;
 use std::collections::HashMap;
 use std::fmt::Debug;
