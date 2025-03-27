@@ -161,7 +161,11 @@ impl<Buf: PacketBufferMut> Packet<Buf> {
 
     /// Encapsulate the packet in the supplied [`Vxlan`] [`Headers`]
     ///
-    /// The supplied [`Headers`] will be validated to ensure they form a VXLAN header.
+    /// * The supplied [`Headers`] will be validated to ensure they form a VXLAN header.
+    /// * If the supplied headers describe an IPv4 encapsulation, then the IPv4 checksum will be
+    ///   updated.
+    /// * The IPv4 / IPv6 headers will be updated to correctly describe the length of the packet.
+    /// *
     ///
     /// # Errors
     ///
@@ -194,6 +198,14 @@ impl<Buf: PacketBufferMut> Packet<Buf> {
         #[allow(clippy::cast_possible_truncation)] // checked
         let udp_len = NonZero::new(len as u16).unwrap_or_else(|| unreachable!());
         let mut headers = params.headers().clone();
+        let Some(udp) = headers.try_udp_mut() else {
+            unreachable!("programmer error: no udp header in vxlan encap operation?");
+        };
+        #[allow(unsafe_code)] // sound usage due to length check
+        unsafe {
+            udp.set_length(udp_len)
+        };
+        udp.set_checksum(0);
         match headers.try_ip_mut() {
             None => unreachable!(),
             Some(Net::Ipv6(ipv6)) => {
@@ -203,17 +215,12 @@ impl<Buf: PacketBufferMut> Packet<Buf> {
                     ipv6.set_payload_length(udp_len.get());
                 }
             }
-            Some(Net::Ipv4(_)) => { /* nothing to do here */ }
-        }
-        match headers.try_udp_mut() {
-            None => {
-                unreachable!();
+            Some(Net::Ipv4(ipv4)) => {
+                // TODO: this isn't _technically_ unreachable
+                ipv4.set_payload_len(udp_len.get())
+                    .unwrap_or_else(|e| unreachable!("{:?}", e));
+                ipv4.update_checksum();
             }
-            #[allow(unsafe_code)] // sound usage due to length check
-            Some(udp) => unsafe {
-                udp.set_length(udp_len);
-                udp.set_checksum(0);
-            },
         }
         self.headers = headers;
         Ok(())
