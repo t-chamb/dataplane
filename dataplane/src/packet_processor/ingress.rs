@@ -3,7 +3,7 @@
 //
 //! Implements an ingress stage
 
-use tracing::{trace, warn};
+use tracing::{debug, trace, warn};
 
 use net::buffer::PacketBufferMut;
 use net::eth::mac::Mac;
@@ -89,6 +89,10 @@ fn interface_ingress_eth<Buf: PacketBufferMut>(
     packet: &mut Packet<Buf>,
 ) {
     if let Some(if_mac) = interface.get_mac() {
+        debug!(
+            "Got packet over interface '{}' ({}) mac:{}",
+            interface.name, interface.ifindex, if_mac
+        );
         match packet.try_eth() {
             None => packet.done(DoneReason::NotEthernet),
             Some(eth) => {

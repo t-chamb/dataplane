@@ -137,5 +137,7 @@ fn main() {
         } */
     }
 
-    let _ = cpi.handle.join();
+    if let Some(handle) = cpi.handle {
+        let _ = handle.join();
+    }
 }

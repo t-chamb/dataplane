@@ -120,7 +120,7 @@ impl<Buf: PacketBufferMut> NetworkFunction<Buf> for Egress {
             if !packet.is_done() {
                 // we must know where to send the packet at this stage
                 let Some(oif) = packet.get_meta().oif else {
-                    warn!("{nfi}: Missing oif metadata!");
+                    warn!("{}: Missing oif metadata!", &self.name);
                     packet.done(DoneReason::RouteFailure);
                     return packet.enforce();
                 };
@@ -137,11 +137,11 @@ impl<Buf: PacketBufferMut> NetworkFunction<Buf> for Egress {
                                 let interface = &interface.borrow();
                                 interface_egress(interface, &mut packet, dst_mac);
                             } else {
-                                warn!("{nfi}: Unknown interface with id {}", oif);
+                                warn!("{}: Unknown interface with id {}", &self.name, oif);
                                 packet.done(DoneReason::InterfaceUnknown);
                             }
                         } else {
-                            warn!("{nfi}: Fib iftable no longer readable!");
+                            warn!("{}: Fib iftable no longer readable!", &self.name);
                             packet.done(DoneReason::InternalFailure);
                         }
                     } else {
