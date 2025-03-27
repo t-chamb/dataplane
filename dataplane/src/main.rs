@@ -16,10 +16,13 @@ mod packet_processor;
 
 use drivers::dpdk::DriverDpdk;
 use drivers::kernel::DriverKernel;
-use net::buffer::PacketBufferMut;
+use net::buffer::{PacketBufferMut, TestBuffer};
 use net::packet::Packet;
 use pipeline::DynPipeline;
 use pipeline::sample_nfs::PacketDumper;
+
+use packet_processor::{setup_routing_pipeline, start_router};
+use routing::router::Router;
 
 fn init_logging() {
     tracing_subscriber::fmt()
@@ -45,6 +48,27 @@ fn setup_pipeline<Buf: PacketBufferMut>() -> DynPipeline<Buf> {
     }
 }
 
+fn setup_router<Buf: PacketBufferMut>() -> DynPipeline<Buf> {
+    let (router, pipeline) = start_router("demo").expect("Failed to start router");
+    pipeline
+}
+
+/*
+fn generate_pipeline_builder<Buf: PacketBufferMut>(
+    router: &Router) -> impl Fn() -> DynPipeline<Buf> {
+    let pipeline = setup_routing_pipeline(
+        router.get_iftabler(),
+        router.get_fibtr(),
+        router.get_atabler().expect("Failed to get atable reader"),
+    );
+    make_builder(pipeline)
+}
+
+fn make_builder<Buf: PacketBufferMut>(pipeline: DynPipeline<Buf>) -> impl Fn() -> DynPipeline<Buf> {
+    move || pipeline
+}
+ */
+
 fn main() {
     init_logging();
     info!("Starting gateway process...");
@@ -56,6 +80,16 @@ fn main() {
     /* parse cmd line args */
     let args = CmdArgs::parse();
 
+    let router = Router::new("demo");
+    let pipeline = setup_routing_pipeline(
+        router.get_iftabler(),
+        router.get_fibtr(),
+        router.get_atabler(),
+    );
+    let builder = move || pipeline;
+
+    //let (router, pipeline) = start_router::<Buf>("demo-router").expect("Failed to start router");
+
     /* start driver */
     match args.get_driver_name() {
         "dpdk" => {
@@ -64,7 +98,9 @@ fn main() {
         }
         "kernel" => {
             info!("Using driver kernel...");
-            DriverKernel::start(args.kernel_params(), &setup_pipeline);
+            //let (router, pipeline) = start_router::<TestBuffer>("demo-router").expect("Failed to start router");
+            //let builder = make_builder(pipeline);
+            DriverKernel::start(args.kernel_params(), builder);
         }
         other => {
             error!("Unknown driver '{other}'. Aborting...");

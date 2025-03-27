@@ -157,7 +157,7 @@ impl DriverKernel {
     /// Starts the kernel driver
     pub fn start(
         args: impl IntoIterator<Item = impl AsRef<str> + Clone>,
-        setup_pipeline: &(impl Sync + Fn() -> DynPipeline<TestBuffer>),
+        setup_pipeline: impl FnOnce() -> DynPipeline<TestBuffer>,
     ) {
         let mut pipeline = setup_pipeline();
 
