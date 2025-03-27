@@ -18,6 +18,7 @@ use crate::headers::{
 };
 use crate::parse::{DeParse, Parse, ParseError};
 use crate::udp::Udp;
+
 use crate::vxlan::{Vxlan, VxlanEncap};
 #[allow(unused_imports)] // re-export
 pub use hash::*;
@@ -177,9 +178,15 @@ impl<Buf: PacketBufferMut> Packet<Buf> {
     ///
     /// This method will panic if the resulting mbuf has a UDP length field longer than 2^16
     /// bytes.
-    pub fn vxlan_encap(self, params: &VxlanEncap) -> Result<Self, <Buf as Prepend>::Error> {
-        let mbuf = self.serialize()?;
-        let len = mbuf.as_ref().len() + (Udp::MIN_LENGTH.get() + Vxlan::MIN_LENGTH.get()) as usize;
+    pub fn vxlan_encap(&mut self, params: &VxlanEncap) -> Result<(), <Buf as Prepend>::Error> {
+        let needed = self.headers.size().get();
+        let buf = self.payload.prepend(needed)?;
+        self.headers
+            .deparse(buf)
+            .unwrap_or_else(|e| unreachable!("{e:?}", e = e));
+
+        let len = self.payload.as_ref().len()
+            + (Udp::MIN_LENGTH.get() + Vxlan::MIN_LENGTH.get()) as usize;
         assert!(
             u16::try_from(len).is_ok(),
             "encap would result in frame larger than 2^16 bytes"
@@ -205,14 +212,11 @@ impl<Buf: PacketBufferMut> Packet<Buf> {
             #[allow(unsafe_code)] // sound usage due to length check
             Some(udp) => unsafe {
                 udp.set_length(udp_len);
+                udp.set_checksum(0);
             },
         }
-        let this = Self {
-            headers,
-            payload: mbuf,
-            meta: PacketMeta::default(),
-        };
-        Ok(this)
+        self.headers = headers;
+        Ok(())
     }
 
     /// Update the packet's buffer based on any changes to the packets [`Headers`].
