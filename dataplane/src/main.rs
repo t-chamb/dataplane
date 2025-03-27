@@ -42,9 +42,13 @@ fn setup_pipeline<Buf: PacketBufferMut>() -> DynPipeline<Buf> {
             /* your own filter here */
             true
         };
-        pipeline.add_stage(PacketDumper::new(true, Some(Box::new(custom_filter))))
+        pipeline.add_stage(PacketDumper::new(
+            "default",
+            true,
+            Some(Box::new(custom_filter)),
+        ))
     } else {
-        pipeline.add_stage(PacketDumper::new(true, None))
+        pipeline.add_stage(PacketDumper::new("default", true, None))
     }
 }
 
@@ -87,6 +91,7 @@ fn main() {
         router.get_atabler(),
     );
     let builder = move || pipeline;
+    //let builder = move || setup_pipeline::<TestBuffer>();
 
     //let (router, pipeline) = start_router::<Buf>("demo-router").expect("Failed to start router");
 
@@ -98,8 +103,6 @@ fn main() {
         }
         "kernel" => {
             info!("Using driver kernel...");
-            //let (router, pipeline) = start_router::<TestBuffer>("demo-router").expect("Failed to start router");
-            //let builder = make_builder(pipeline);
             DriverKernel::start(args.kernel_params(), builder);
         }
         other => {

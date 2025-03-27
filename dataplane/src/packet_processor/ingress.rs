@@ -52,7 +52,9 @@ fn interface_ingress_eth_ucast_local<Buf: PacketBufferMut>(
     if packet.try_ipv4().is_some() || packet.try_ipv6().is_some() {
         match &interface.attachment {
             Some(Attachment::VRF(fibr)) => {
-                packet.get_meta_mut().vrf = Some(fibr.get_id().unwrap().as_u32());
+                let vrfid = fibr.get_id().unwrap().as_u32();
+                debug!("Packet is for VRF {}", vrfid);
+                packet.get_meta_mut().vrf = Some(vrfid);
             }
             Some(Attachment::BD) => unimplemented!(),
             None => {

@@ -4,7 +4,7 @@
 //! Implements an Ip forwarding stage
 
 use std::net::IpAddr;
-use tracing::{debug, trace, warn};
+use tracing::{debug, error, trace, warn};
 
 use net::buffer::PacketBufferMut;
 use net::headers::{TryIpv4Mut, TryIpv6Mut};
@@ -57,20 +57,17 @@ impl IpForwarder {
                 if let Some(fibr) = fibtr.get_fib(&FibId::from_vrfid(vrfid)) {
                     if let Some(fib) = fibr.enter() {
                         let fibentry = fib.lpm_entry(packet);
-                        debug!(
-                            "{} Packet will be handled with fib entry:\n{}",
-                            &self.name, &fibentry
-                        );
+                        debug!("{}: Pkt will use fib entry:\n{}", &self.name, &fibentry);
                         self.packet_exec_instructions(packet, fibentry);
                     } else {
-                        warn!("{}: Unable to read fib for vrf {vrfid}", &self.name);
+                        error!("{}: Unable to read fib for vrf {vrfid}", &self.name);
                     }
                 } else {
-                    warn!("{}: Unable to find fib for vrf {vrfid}", &self.name);
+                    error!("{}: Unable to find fib for vrf {vrfid}", &self.name);
                 }
             }
         } else {
-            warn!(
+            error!(
                 "{}: Failed to get destination ip address for packet",
                 &self.name
             );
@@ -97,8 +94,8 @@ impl IpForwarder {
                 if let Some(fib) = fibtable.get_fib(&FibId::from_vni(vni)) {
                     packet.get_meta_mut().vrf = Some(fib.get_id().unwrap().as_u32());
                 } else {
-                    warn!(
-                        "{}: Unable to read from fib for vni {}",
+                    error!(
+                        "{}: Unable to read fib for vni {}",
                         &self.name,
                         vni.as_u32()
                     );
@@ -106,7 +103,7 @@ impl IpForwarder {
             }
         } else {
             /* send to kernel, among other options */
-            warn!("This packet should be delivered to kernel");
+            debug!("Packet should be delivered to kernel...");
             packet.get_meta_mut().oif = Some(packet.get_meta().iif);
             //packet.done(DoneReason::Delivered);
         }

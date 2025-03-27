@@ -181,6 +181,11 @@ impl DriverKernel {
                             /* lookup outgoing interface and xmit packet */
                             if let Some(outgoing) = kiftable.get_mut_by_index(oif.get_id()) {
                                 let mut out = pkt.reserialize();
+                                debug!(
+                                    "Sending frame of length {} octets over interface {}",
+                                    out.as_ref().len(),
+                                    &outgoing.name
+                                );
                                 outgoing.sock.write_all(out.as_mut());
                             } else {
                                 warn!("Unable to find interface with ifindex {}", oif.get_id())

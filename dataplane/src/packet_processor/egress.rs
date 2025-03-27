@@ -4,13 +4,12 @@
 //! Implements an egress stage
 
 use std::net::IpAddr;
-use tracing::{error, trace, warn};
+use tracing::{debug, error, trace, warn};
 
 use net::buffer::PacketBufferMut;
 use net::eth::mac::{DestinationMac, SourceMac};
 use net::headers::TryEthMut;
-use net::packet::DoneReason;
-use net::packet::Packet;
+use net::packet::{DoneReason, Packet};
 use pipeline::NetworkFunction;
 
 use routing::atable::atablerw::AtableReader;
@@ -46,11 +45,11 @@ fn interface_egress_ethernet<Buf: PacketBufferMut>(
         if let Some(eth) = packet.try_eth_mut() {
             eth.set_source(SourceMac::new(our_mac).expect("Bad interface mac")); // fixme: interface should store Source mac?
             eth.set_destination(dst_mac);
-            trace!(
+            debug!(
                 "Packet can be sent over iface {}  MAC {}",
                 interface.name, dst_mac
             );
-            /* serialize and send */
+            /* processing is complete! */
             packet.done(DoneReason::Delivered);
         } else {
             // this should never happen at this stage
