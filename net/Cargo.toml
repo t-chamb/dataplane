@@ -17,18 +17,17 @@ id = {workspace = true }
 
 # external
 ahash = { workspace = true }
-arc-swap = { workspace = true }
 arbitrary = { workspace = true, features = ["derive"], optional = true }
-bolero = { workspace = true, features = ["alloc", "arbitrary", "std"], optional = true }
+arc-swap = { workspace = true }
 arrayvec = { workspace = true }
-# ideally, we would do without "std" for etherparse, but we need it for error types.
+bolero = { workspace = true, features = ["alloc", "arbitrary", "std"], optional = true }
+dyn-iter = { workspace = true }
 etherparse = { workspace = true, features = ["std"] }
 nom = { workspace = true, features = ["std"]  }
+ordermap = { workspace = true }
 serde = { workspace = true, optional = true, features = ["derive"] }
 thiserror = { workspace = true }
 tracing = { workspace = true }
-dyn-iter = { workspace = true }
-ordermap = { workspace = true }
 
 
 [dev-dependencies]
