@@ -93,7 +93,7 @@ fn get_adj_mac<Buf: PacketBufferMut>(
         if let Some(adj) = atable.get_adjacency(addr, ifindex) {
             unsafe { Some(DestinationMac::new_unchecked(adj.get_mac())) }
         } else {
-            warn!("{nfi}: missing adj info to {}", addr);
+            warn!("{nfi}: missing L2 info for {}", addr);
             packet.done(DoneReason::MissL2resolution);
             None
         }
@@ -102,6 +102,26 @@ fn get_adj_mac<Buf: PacketBufferMut>(
         packet.done(DoneReason::InternalFailure);
         None
     }
+}
+
+fn resolve_next_mac<Buf: PacketBufferMut>(
+    nfi: &str,
+    atabler: &AtableReader,
+    ifindex: IfIndex,
+    packet: &mut Packet<Buf>,
+) -> Option<DestinationMac> {
+    // if packet was annotated with a next-hop address, try to resolve it using the
+    // adjacency table. Otherwise, that means that the packet is directly connected
+    // to us (on the same subnet). So, fetch the destination IP address and try to
+    // resolve it with the adjacency table as well. If that fails, that's where the
+    // ARP/ND would need to be triggered.
+    let next_ip = if let Some(nh_addr) = packet.get_meta().nh_addr {
+        nh_addr
+    } else {
+        packet.ip_destination().expect("No ip dest address")
+    };
+    // figure out MAC
+    get_adj_mac(nfi, atabler, packet, next_ip, ifindex)
 }
 
 impl<Buf: PacketBufferMut> NetworkFunction<Buf> for Egress {
@@ -125,33 +145,22 @@ impl<Buf: PacketBufferMut> NetworkFunction<Buf> for Egress {
                 };
                 let oif = oif.get_id();
 
-                // if packet was annotated with next-hop address, try to resolve its
-                // mac address.
-                if let Some(nh_addr) = packet.get_meta().nh_addr {
-                    if let Some(dst_mac) =
-                        get_adj_mac(&nfi, &self.atabler, &mut packet, nh_addr, oif)
-                    {
-                        if let Some(iftable) = self.iftr.enter() {
-                            if let Some(interface) = iftable.get_interface(oif) {
-                                let interface = &interface.borrow();
-                                interface_egress(interface, &mut packet, dst_mac);
-                            } else {
-                                warn!("{}: Unknown interface with id {}", &self.name, oif);
-                                packet.done(DoneReason::InterfaceUnknown);
-                            }
+                if let Some(dst_mac) = resolve_next_mac(&nfi, &self.atabler, oif, &mut packet) {
+                    if let Some(iftable) = self.iftr.enter() {
+                        if let Some(interface) = iftable.get_interface(oif) {
+                            let interface = &interface.borrow();
+                            interface_egress(interface, &mut packet, dst_mac);
                         } else {
-                            warn!("{}: Fib iftable no longer readable!", &self.name);
-                            packet.done(DoneReason::InternalFailure);
+                            warn!("{}: Unknown interface with id {}", &self.name, oif);
+                            packet.done(DoneReason::InterfaceUnknown);
                         }
                     } else {
-                        // adjacency resolution failed; get_adj_mac() set the done reason
-                        // and we stop processing pkts here.
+                        warn!("{}: Fib iftable no longer readable!", &self.name);
+                        packet.done(DoneReason::InternalFailure);
                     }
                 } else {
-                    // we have not been told next-hop address. The recipient of the packet must be directly
-                    // connected. So we need to resolve the destination. However, ARP resolution is not yet
-                    // ready.
-                    packet.done(DoneReason::Unhandled);
+                    // we could not figure out the destination MAC.
+                    // resolve_next_mac() already deals with calling packet.done().
                 }
             }
             packet.enforce()

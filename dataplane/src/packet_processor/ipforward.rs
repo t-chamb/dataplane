@@ -41,7 +41,11 @@ impl IpForwarder {
             debug!("{}: process pkt to {} with vrf {}", &self.name, dst, vrfid);
 
             /* decrement TTL */
-            Self::decrement_ttl(packet, dst);
+            if false {
+                Self::decrement_ttl(packet, dst);
+            } else {
+                warn!("TTL decrement disabled!");
+            }
 
             /* packet may be done if TTL is exceeded */
             if packet.is_done() {

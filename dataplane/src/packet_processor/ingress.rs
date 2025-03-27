@@ -24,6 +24,7 @@ pub struct Ingress {
 
 #[allow(dead_code)]
 impl Ingress {
+    /// Creates a new [`Ingress`] stage
     pub fn new(name: &str, iftr: IfTableReader) -> Self {
         Self {
             name: name.to_owned(),
@@ -78,7 +79,7 @@ fn interface_ingress_eth_non_local<Buf: PacketBufferMut>(
     /* Here we would check if the interface is part of some
     bridge domain. But we don't support bridging yet. */
     warn!(
-        "{nfi}: Recvd frame for mac {}. Bridging is not supported",
+        "{nfi}: Recvd frame for mac {} not for us and bridging is not supported",
         dst_mac
     );
     packet.done(DoneReason::MacNotForUs);
